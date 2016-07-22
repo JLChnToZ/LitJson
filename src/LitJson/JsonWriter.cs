@@ -459,5 +459,15 @@ namespace LitJson
 
             context.ExpectingValue = true;
         }
+        
+        public void WriteRaw (string str)
+        {
+            DoValidation (Condition.Value);
+            PutNewline ();
+
+            Put (str);
+
+            context.ExpectingValue = false;
+        }
     }
 }

@@ -700,7 +700,7 @@ namespace LitJson
 
             if (obj is IJsonWrapper) {
                 if (writer_is_private)
-                    writer.TextWriter.Write (((IJsonWrapper) obj).ToJson ());
+                    writer.WriteRaw (((IJsonWrapper) obj).ToJson ());
                 else
                     ((IJsonWrapper) obj).ToJson (writer);
 
