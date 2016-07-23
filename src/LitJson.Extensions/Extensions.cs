@@ -286,17 +286,32 @@ namespace LitJson {
         }
 
         private class PlaceHolder {
-            private ArrayList arrayList;
-            private Hashtable hashtable;
-            private int index;
-            private object key;
+            public readonly IJsonWrapper source;
+            private readonly ArrayList arrayList;
+            private readonly Hashtable hashtable;
+            private readonly int index;
+            private readonly object key;
 
-            public PlaceHolder(ArrayList arrayList, int index) {
-                this.arrayList = arrayList;
-                this.index = index;
+            public PlaceHolder(IJsonWrapper source) {
+                this.source = source;
+                this.arrayList = null;
+                this.index = 0;
+                this.hashtable = null;
+                this.key = null;
             }
 
-            public PlaceHolder(Hashtable hashtable, object key) {
+            public PlaceHolder(IJsonWrapper source, ArrayList arrayList, int index) {
+                this.source = source;
+                this.arrayList = arrayList;
+                this.index = index;
+                this.hashtable = null;
+                this.key = null;
+            }
+
+            public PlaceHolder(IJsonWrapper source, Hashtable hashtable, object key) {
+                this.source = source;
+                this.arrayList = null;
+                this.index = 0;
                 this.hashtable = hashtable;
                 this.key = key;
             }
@@ -311,25 +326,22 @@ namespace LitJson {
     
         public static object Box(this IJsonWrapper source) {
             if(source == null) return null;
-            var checkList = new Dictionary<IJsonWrapper, PlaceHolder>();
-            KeyValuePair<IJsonWrapper, PlaceHolder>[] buffer = null;
+            var checkList = new List<PlaceHolder> { new PlaceHolder(source) };
+            PlaceHolder[] buffer = null;
             object result, rootResult = null;
             IJsonWrapper parent, child;
-            PlaceHolder placeHolder;
-            int bufferCount, bufferIndex, i;
-            checkList.Add(source, null);
+            int bufferCount, bufferIndex, i, count;
             while((bufferCount = checkList.Count) > 0) {
                 if(buffer == null)
-                    buffer = new KeyValuePair<IJsonWrapper, PlaceHolder>[bufferCount];
+                    buffer = new PlaceHolder[bufferCount];
                 else if(buffer.Length < bufferCount)
                     Array.Resize(ref buffer, bufferCount);
-                (checkList as ICollection<KeyValuePair<IJsonWrapper, PlaceHolder>>).CopyTo(buffer, 0);
+                checkList.CopyTo(buffer, 0);
                 checkList.Clear();
                 bufferIndex = 0;
-                foreach(var kv in buffer) {
+                foreach(var placeHolder in buffer) {
                     if(++bufferIndex > bufferCount) break;
-                    parent = kv.Key;
-                    placeHolder = kv.Value;
+                    parent = placeHolder.source;
                     result = null;
                     switch(parent.GetJsonType()) {
                         case JsonType.Boolean: result = parent.GetBoolean(); break;
@@ -337,32 +349,29 @@ namespace LitJson {
                         case JsonType.Long: result = parent.GetLong(); break;
                         case JsonType.Double: result = parent.GetDouble(); break;
                         case JsonType.String: result = parent.GetString(); break;
-                        case JsonType.Array: {
-                                int count = parent.Count;
-                                ArrayList resultList = ArrayList.Repeat(null, count);
-                                IList jsonArray = parent as IList;
-                                for(i = 0; i < count; i++) {
-                                    child = jsonArray[i] as IJsonWrapper;
-                                    if(child != null && child.GetJsonType() != JsonType.None)
-                                        checkList[child] = new PlaceHolder(resultList, i);
-                                }
-                                result = resultList;
+                        case JsonType.Array:
+                            IList parentList = parent as IList;
+                            count = parentList.Count;
+                            ArrayList resultList = ArrayList.Repeat(null, count);
+                            for(i = 0; i < count; i++) {
+                                child = parentList[i] as IJsonWrapper;
+                                if(child != null && child.GetJsonType() != JsonType.None)
+                                    checkList.Add(new PlaceHolder(child, resultList, i));
                             }
+                            result = resultList;
                             break;
-                        case JsonType.Object: {
-                                Hashtable resultTable = new Hashtable();
-                                foreach(DictionaryEntry entry in parent as IDictionary) {
-                                    child = entry.Value as IJsonWrapper;
-                                    if(child != null && child.GetJsonType() != JsonType.None)
-                                        checkList[child] = new PlaceHolder(resultTable, entry.Key);
-                                }
-                                result = resultTable;
+                        case JsonType.Object:
+                            Hashtable resultTable = new Hashtable();
+                            foreach(DictionaryEntry entry in parent as IDictionary) {
+                                child = entry.Value as IJsonWrapper;
+                                if(child != null && child.GetJsonType() != JsonType.None)
+                                    checkList.Add(new PlaceHolder(child, resultTable, entry.Key));
                             }
+                            result = resultTable;
                             break;
                     }
-                    if(placeHolder != null)
-                        placeHolder.Assign(result);
-                    else if(parent == source)
+                    placeHolder.Assign(result);
+                    if(parent == source)
                         rootResult = result;
                 }
             }
