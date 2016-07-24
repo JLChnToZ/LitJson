@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace LitJson {
-    public partial class JsonData: IJsonWrapper, IEquatable<JsonData>, IConvertible {
+    public partial class JsonData: IJsonWrapper, IEquatable<JsonData>, IConvertible, IFormattable {
         TypeCode IConvertible.GetTypeCode() {
             switch(type) {
                 case JsonType.Boolean: return TypeCode.Boolean;
@@ -178,8 +178,18 @@ namespace LitJson {
                 case JsonType.Double: return inst_double.ToString(provider);
                 case JsonType.Boolean: return inst_boolean.ToString(provider);
                 case JsonType.String: return inst_string;
-                case JsonType.Array: return string.Format("[JSON Array ({0})]", EnsureCollection().Count);
-                case JsonType.Object: return string.Format("[JSON Object ({0})]", EnsureCollection().Count);
+                default: return ToString();
+            }
+        }
+
+        string IFormattable.ToString(string format, IFormatProvider formatProvider) {
+            switch(type) {
+                case JsonType.None: return string.Empty;
+                case JsonType.Int: return inst_int.ToString(format, formatProvider);
+                case JsonType.Long: return inst_long.ToString(format, formatProvider);
+                case JsonType.Double: return inst_double.ToString(format, formatProvider);
+                case JsonType.Boolean: return inst_boolean.ToString(formatProvider);
+                case JsonType.String: return inst_string;
                 default: return ToString();
             }
         }

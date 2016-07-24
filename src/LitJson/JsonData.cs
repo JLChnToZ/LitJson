@@ -19,7 +19,7 @@ using System.IO;
 
 namespace LitJson
 {
-    public partial class JsonData : IJsonWrapper, IEquatable<JsonData>, IConvertible
+    public partial class JsonData : IJsonWrapper, IEquatable<JsonData>, IConvertible, IFormattable
     {
         #region Fields
         private IList<JsonData>               inst_array;
