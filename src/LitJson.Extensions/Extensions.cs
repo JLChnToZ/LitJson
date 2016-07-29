@@ -22,6 +22,7 @@ namespace LitJson {
             return defaultValue;
         }
 
+        [CLSCompliant(false)]
         public static sbyte AsInt8(this IJsonWrapper source, sbyte defaultValue = 0) {
             if(source == null) return defaultValue;
             switch(source.GetJsonType()) {
@@ -112,6 +113,7 @@ namespace LitJson {
             return defaultValue;
         }
 
+        [CLSCompliant(false)]
         public static ushort AsUInt16(this IJsonWrapper source, ushort defaultValue = 0) {
             if(source == null) return defaultValue;
             switch(source.GetJsonType()) {
@@ -130,6 +132,7 @@ namespace LitJson {
             return defaultValue;
         }
 
+        [CLSCompliant(false)]
         public static uint AsUInt32(this IJsonWrapper source, uint defaultValue = 0) {
             if(source == null) return defaultValue;
             switch(source.GetJsonType()) {
@@ -148,6 +151,7 @@ namespace LitJson {
             return defaultValue;
         }
 
+        [CLSCompliant(false)]
         public static ulong AsUInt64(this IJsonWrapper source, ulong defaultValue = 0) {
             if(source == null) return defaultValue;
             switch(source.GetJsonType()) {
@@ -364,7 +368,7 @@ namespace LitJson {
                             Hashtable resultTable = new Hashtable();
                             foreach(DictionaryEntry entry in parent as IDictionary) {
                                 child = entry.Value as IJsonWrapper;
-                                if(child != null && child.GetJsonType() != JsonType.None)
+                                if(child != null)
                                     checkList.Add(new PlaceHolder(child, resultTable, entry.Key));
                             }
                             result = resultTable;
