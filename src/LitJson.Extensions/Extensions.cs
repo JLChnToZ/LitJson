@@ -238,6 +238,16 @@ namespace LitJson {
             return false;
         }
 
+        public static bool TryGetChild<TJsonWrapper>(this IJsonWrapper source, string key, out TJsonWrapper child) where TJsonWrapper : IJsonWrapper {
+            IJsonWrapper result;
+            if(TryGetChild(source, key, out result)) {
+                child = (TJsonWrapper)result;
+                return true;
+            }
+            child = default(TJsonWrapper);
+            return false;
+        }
+
         public static bool TryGetChild(this IJsonWrapper source, int index, out IJsonWrapper child) {
             if(source != null) {
                 if(source.IsArray && index > 0 && index < source.Count) {
@@ -256,6 +266,16 @@ namespace LitJson {
             return false;
         }
 
+        public static bool TryGetChild<TJsonWrapper>(this IJsonWrapper source, int index, out TJsonWrapper child) where TJsonWrapper : IJsonWrapper {
+            IJsonWrapper result;
+            if(TryGetChild(source, index, out result)) {
+                child = (TJsonWrapper)result;
+                return true;
+            }
+            child = default(TJsonWrapper);
+            return false;
+        }
+
         public static bool TryGetChild(this IJsonWrapper source, out IJsonWrapper child, params object[] path) {
             child = source;
             if(path != null)
@@ -269,6 +289,16 @@ namespace LitJson {
                     if(child == null) break;
                 }
             return child != null;
+        }
+
+        public static bool TryGetChild<TJsonWrapper>(this IJsonWrapper source, out TJsonWrapper child, params object[] path) where TJsonWrapper : IJsonWrapper {
+            IJsonWrapper result;
+            if(TryGetChild(source, out result, path)) {
+                child = (TJsonWrapper)result;
+                return true;
+            }
+            child = default(TJsonWrapper);
+            return false;
         }
 
         public static IJsonWrapper GetChild(this IJsonWrapper source, string key) {
