@@ -250,7 +250,7 @@ namespace LitJson {
 
         public static bool TryGetChild(this IJsonWrapper source, int index, out IJsonWrapper child) {
             if(source != null) {
-                if(source.IsArray && index > 0 && index < source.Count) {
+                if(source.IsArray && index >= 0 && index < source.Count) {
                     child = (source as IList)[index] as IJsonWrapper;
                     return true;
                 }
