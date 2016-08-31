@@ -228,7 +228,7 @@ namespace LitJson {
                 }
                 if(source.IsArray) {
                     int index;
-                    if(int.TryParse(key, out index) && index > 0 && index < source.Count) {
+                    if(int.TryParse(key, out index) && index >= 0 && index < source.Count) {
                         child = (source as IList)[index] as IJsonWrapper;
                         return true;
                     }
