@@ -336,6 +336,7 @@ namespace LitJson
 
         public JsonData (object obj)
         {
+            /* // Comment out original implementation
             if (obj is Boolean) {
                 type = JsonType.Boolean;
                 inst_boolean = (bool) obj;
@@ -368,6 +369,67 @@ namespace LitJson
 
             throw new ArgumentException (
                 "Unable to wrap the given object with JsonData");
+            */
+
+            if(obj == null) {
+                type = JsonType.None;
+                return;
+            }
+
+            // Primitive type guess here
+            switch(Convert.GetTypeCode(obj)) {
+                case TypeCode.Empty:
+                case TypeCode.DBNull: type = JsonType.None; return;
+                case TypeCode.Boolean: inst_boolean = Convert.ToBoolean(obj); type = JsonType.Boolean; return;
+                case TypeCode.Byte: inst_int = Convert.ToByte(obj); type = JsonType.Int; return;
+                case TypeCode.SByte: inst_int = Convert.ToSByte(obj); type = JsonType.Int; return;
+                case TypeCode.UInt16: inst_int = Convert.ToUInt16(obj); type = JsonType.Int; return;
+                case TypeCode.Int16: inst_int = Convert.ToInt16(obj); type = JsonType.Int; return;
+                // Signed 32bit integer is not enough to store the unsinged 32 bit integer value if greatest bit is set.
+                case TypeCode.UInt32: inst_long = Convert.ToUInt32(obj); type = JsonType.Long; return;
+                case TypeCode.Int32: inst_int = Convert.ToInt32(obj); type = JsonType.Int; return;
+                // For unsigned long integers, it might overflow if the greatest bit is set.
+                case TypeCode.UInt64: inst_long = (long)Convert.ToUInt64(obj); type = JsonType.Long; return;
+                case TypeCode.Int64: inst_long = Convert.ToInt64(obj); type = JsonType.Long; return;
+                case TypeCode.Single: inst_double = Convert.ToSingle(obj); type = JsonType.Double; return;
+                case TypeCode.Double: inst_double = Convert.ToDouble(obj); type = JsonType.Double; return;
+                // For decimals, if the value is not integer, store as floating-point number instead.
+                case TypeCode.Decimal:
+                    decimal decValue = Convert.ToDecimal(obj);
+                    if(decValue % 1M == 0M) {
+                        inst_long = (long)obj;
+                        type = JsonType.Long;
+                    } else {
+                        inst_double = (double)obj;
+                        type = JsonType.Double;
+                    }
+                    return;
+                // For date time values, store as ISO string.
+                case TypeCode.DateTime: inst_string = Convert.ToDateTime(obj).ToString("o"); type = JsonType.String; return;
+                // For single character, store as string.
+                case TypeCode.Char: inst_string = Convert.ToChar(obj).ToString(); type = JsonType.String; return;
+                case TypeCode.String: inst_string = Convert.ToString(obj); type = JsonType.String; return;
+            }
+
+            // Dictionary types
+            IEnumerable<DictionaryEntry> dictEnumerable = obj as IEnumerable<DictionaryEntry>;
+            if(dictEnumerable != null) {
+                SetJsonType(JsonType.Object);
+                foreach(DictionaryEntry kv in dictEnumerable)
+                    this[kv.Key.ToString()] = new JsonData(kv.Value);
+            }
+
+            // Other array types
+            IEnumerable arrayEnumerable = obj as IEnumerable;
+            if(arrayEnumerable != null) {
+                SetJsonType(JsonType.Array);
+                foreach(object item in arrayEnumerable)
+                    Add(new JsonData(item));
+            }
+
+            // Nether above, just store as string here
+            inst_string = obj.ToString();
+            type = JsonType.String;
         }
 
         public JsonData (string str)
