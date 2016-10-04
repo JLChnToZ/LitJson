@@ -371,6 +371,12 @@ namespace LitJson
                 "Unable to wrap the given object with JsonData");
             */
 
+            IJsonWrapper jsonWrapper = obj as IJsonWrapper;
+            if(jsonWrapper != null) {
+                CloneFromJsonWrapper(jsonWrapper);
+                return;
+            }
+
             if(obj == null) {
                 type = JsonType.None;
                 return;
@@ -412,11 +418,11 @@ namespace LitJson
             }
 
             // Dictionary types
-            IEnumerable<DictionaryEntry> dictEnumerable = obj as IEnumerable<DictionaryEntry>;
+            IDictionary dictEnumerable = obj as IDictionary;
             if(dictEnumerable != null) {
                 SetJsonType(JsonType.Object);
                 foreach(DictionaryEntry kv in dictEnumerable)
-                    this[kv.Key.ToString()] = new JsonData(kv.Value);
+                    this[kv.Key.ToString()] = kv.Value as JsonData ?? new JsonData(kv.Value);
             }
 
             // Other array types
@@ -424,7 +430,7 @@ namespace LitJson
             if(arrayEnumerable != null) {
                 SetJsonType(JsonType.Array);
                 foreach(object item in arrayEnumerable)
-                    Add(new JsonData(item));
+                    Add(item as JsonData ?? new JsonData(item));
             }
 
             // Nether above, just store as string here
@@ -436,6 +442,47 @@ namespace LitJson
         {
             type = JsonType.String;
             inst_string = str;
+        }
+
+        public JsonData(IJsonWrapper jsonWrapper) {
+            if(jsonWrapper != null)
+                CloneFromJsonWrapper(jsonWrapper);
+        }
+
+        private void CloneFromJsonWrapper(IJsonWrapper jsonWrapper) {
+            JsonData jsonData = jsonWrapper as JsonData;
+            if(jsonData != null) {
+                type = jsonData.type;
+                json = jsonData.json;
+                inst_boolean = jsonData.inst_boolean;
+                inst_double = jsonData.inst_double;
+                inst_int = jsonData.inst_int;
+                inst_long = jsonData.inst_long;
+                inst_string = jsonData.inst_string;
+                if(jsonData.inst_array != null)
+                    inst_array = new List<JsonData>(jsonData.inst_array);
+                if(jsonData.inst_object != null)
+                    inst_object = new Dictionary<string, JsonData>(jsonData.inst_object);
+                return;
+            }
+            type = jsonWrapper.GetJsonType();
+            switch(type) {
+                case JsonType.Boolean: inst_boolean = jsonWrapper.GetBoolean(); break;
+                case JsonType.Int: inst_int = jsonWrapper.GetInt(); break;
+                case JsonType.Long: inst_long = jsonWrapper.GetLong(); break;
+                case JsonType.Double: inst_double = jsonWrapper.GetDouble(); break;
+                case JsonType.String: inst_string = jsonWrapper.GetString(); break;
+                case JsonType.Array:
+                    SetJsonType(JsonType.Array);
+                    foreach(object item in jsonWrapper as IList)
+                        Add(item as JsonData ?? new JsonData(item));
+                    break;
+                case JsonType.Object:
+                    SetJsonType(JsonType.Object);
+                    foreach(DictionaryEntry item in jsonWrapper as IDictionary)
+                        this[item.Key.ToString()] = item.Value as JsonData ?? new JsonData(item.Value);
+                    break;
+            }
         }
         #endregion
 
