@@ -12,7 +12,7 @@ namespace LitJson.ExtensionsHelpers {
 
             public Enumerator(IJsonWrapper jsonWrapper) {
                 this.jsonWrapper = jsonWrapper;
-                if(jsonWrapper.IsObject)
+                if(jsonWrapper != null && jsonWrapper.IsObject)
                     keyEnumerator = jsonWrapper.Keys.GetEnumerator();
                 index = -1;
             }
@@ -49,7 +49,7 @@ namespace LitJson.ExtensionsHelpers {
                 if(jsonWrapper == null) return false;
                 if(keyEnumerator != null)
                     return keyEnumerator.MoveNext();
-                return ++index < jsonWrapper.Count;
+                return jsonWrapper.IsArray && ++index < jsonWrapper.Count;
             }
 
             public void Reset() {
