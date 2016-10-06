@@ -423,6 +423,7 @@ namespace LitJson
                 SetJsonType(JsonType.Object);
                 foreach(DictionaryEntry kv in dictEnumerable)
                     this[kv.Key.ToString()] = kv.Value as JsonData ?? new JsonData(kv.Value);
+                return;
             }
 
             // Other array types
@@ -430,7 +431,8 @@ namespace LitJson
             if(arrayEnumerable != null) {
                 SetJsonType(JsonType.Array);
                 foreach(object item in arrayEnumerable)
-                    Add(item as JsonData ?? new JsonData(item));
+                    Add(item);
+                return;
             }
 
             // Nether above, just store as string here
