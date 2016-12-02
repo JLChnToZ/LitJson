@@ -466,68 +466,64 @@ namespace LitJson
         private static IJsonWrapper ReadValue (WrapperFactory factory,
                                                JsonReader reader)
         {
-            reader.Read ();
+            return ReadValue(factory, reader, true);
+        }
 
-            if (reader.Token == JsonToken.ArrayEnd ||
+        private static IJsonWrapper ReadValue(WrapperFactory factory, JsonReader reader, bool readNext) {
+            if(readNext) reader.Read();
+
+            if(reader.Token == JsonToken.ArrayEnd ||
                 reader.Token == JsonToken.Null)
                 return null;
 
-            IJsonWrapper instance = factory ();
+            IJsonWrapper instance = factory();
 
-            if (reader.Token == JsonToken.String) {
-                instance.SetString ((string) reader.Value);
-                return instance;
-            }
+            switch(reader.Token) {
+                case JsonToken.String:
+                    instance.SetString((string)reader.Value);
+                    break;
+                case JsonToken.Double:
+                    instance.SetDouble((double)reader.Value);
+                    break;
+                case JsonToken.Int:
+                    instance.SetInt((int)reader.Value);
+                    break;
+                case JsonToken.Long:
+                    instance.SetLong((long)reader.Value);
+                    break;
+                case JsonToken.Boolean:
+                    instance.SetBoolean((bool)reader.Value);
+                    break;
+                case JsonToken.ArrayStart:
+                    instance.SetJsonType(JsonType.Array);
 
-            if (reader.Token == JsonToken.Double) {
-                instance.SetDouble ((double) reader.Value);
-                return instance;
-            }
+                    while(true) {
+                        reader.Read();
 
-            if (reader.Token == JsonToken.Int) {
-                instance.SetInt ((int) reader.Value);
-                return instance;
-            }
+                        if(reader.Token == JsonToken.ArrayEnd)
+                            break;
+                        
+                        ((IList)instance).Add(ReadValue(factory, reader, false));
+                    }
+                    break;
+                case JsonToken.ObjectStart:
+                    instance.SetJsonType(JsonType.Object);
 
-            if (reader.Token == JsonToken.Long) {
-                instance.SetLong ((long) reader.Value);
-                return instance;
-            }
+                    while(true) {
+                        reader.Read();
 
-            if (reader.Token == JsonToken.Boolean) {
-                instance.SetBoolean ((bool) reader.Value);
-                return instance;
-            }
+                        if(reader.Token == JsonToken.ObjectEnd)
+                            break;
 
-            if (reader.Token == JsonToken.ArrayStart) {
-                instance.SetJsonType (JsonType.Array);
+                        string property = (string)reader.Value;
 
-                while (true) {
-                    IJsonWrapper item = ReadValue (factory, reader);
-                    if (reader.Token == JsonToken.ArrayEnd)
-                        break;
-
-                    ((IList) instance).Add (item);
-                }
-            }
-            else if (reader.Token == JsonToken.ObjectStart) {
-                instance.SetJsonType (JsonType.Object);
-
-                while (true) {
-                    reader.Read ();
-
-                    if (reader.Token == JsonToken.ObjectEnd)
-                        break;
-
-                    string property = (string) reader.Value;
-
-                    ((IDictionary) instance)[property] = ReadValue (
-                        factory, reader);
-                }
-
+                        ((IDictionary)instance)[property] = ReadValue(factory, reader, true);
+                    }
+                    break;
             }
 
             return instance;
+
         }
 
         private static void RegisterBaseExporters ()
